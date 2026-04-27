@@ -105,6 +105,7 @@ O arquivo será gerado em:
 build/app/outputs/flutter-apk/app-release.apk
 ## 👨‍💻 Desenvolvido por
 
+**Legiano Lucio Rodrigues**
 Projeto desenvolvido no **IFMS — Instituto Federal de Mato Grosso do Sul**
 
 ---
