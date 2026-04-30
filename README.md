@@ -1,7 +1,5 @@
 # 💧 AgroGota IrrigaTech
 
-
-
 <p align="center">
   <img src="assets/icon.png" alt="AgroGota IrrigaTech" width="200"/>
 </p>
@@ -70,9 +68,10 @@ Todos os dados necessários estão dentro do app:
 - [SQLite (sqflite)](https://pub.dev/packages/sqflite) — banco de dados local
 - [Shared Preferences](https://pub.dev/packages/shared_preferences) — armazenamento local
 - [Provider](https://pub.dev/packages/provider) — gerenciamento de estado
-
+  
 ## 📂 Estrutura do projeto
 
+```
 lib/
 ├── main.dart
 ├── db/
@@ -93,6 +92,7 @@ lib/
     ├── resultado_screen.dart
     ├── historico_screen.dart
     └── config_screen.dart
+```
     
 ## 🚀 Como rodar o projeto
 
