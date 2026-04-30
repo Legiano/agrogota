@@ -15,24 +15,17 @@ class WelcomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              // Ícone principal
-              Container(
-                width: 110,
-                height: 110,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1AAF72),
-                  borderRadius: BorderRadius.circular(28),
-                ),
-                child: const Icon(
-                  Icons.water_drop,
-                  size: 60,
-                  color: Colors.white,
-                ),
+              // Imagem do professor
+              Image.asset(
+                'assets/icon.png',
+                width: 120,
+                height: 120,
+                fit: BoxFit.contain,
               ),
               const SizedBox(height: 24),
               // Título
               const Text(
-                  'AgroGota IrrigaTech',
+                'AgroGota IrrigaTech',
                 style: TextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.bold,
