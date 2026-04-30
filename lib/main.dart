@@ -21,7 +21,7 @@ class IrrigaFacilApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'IrrigaFácil',
+      title: 'AgroGota',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -107,7 +107,7 @@ class _MainNavigationState extends State<MainNavigation> {
             color: Colors.white,
             padding: const EdgeInsets.only(bottom: 12, top: 4),
             child: const Text(
-              'IrrigaFácil © 2026 — IFMS',
+              'AgroGota IrrigaTech © 2026 — IFMS',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 11, color: Colors.grey),
             ),

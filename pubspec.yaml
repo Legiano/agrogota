@@ -1,6 +1,5 @@
-name: irriga_facil
-description: "A new Flutter project."
-publish_to: "none"
+name: agrogota
+description: "Aplicativo de manejo de irrigação para agricultura familiar."
 
 version: 1.0.0+1
 

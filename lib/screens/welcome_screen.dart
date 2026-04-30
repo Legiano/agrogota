@@ -32,7 +32,7 @@ class WelcomeScreen extends StatelessWidget {
               const SizedBox(height: 24),
               // Título
               const Text(
-                'IrrigaFácil',
+                  'AgroGota IrrigaTech',
                 style: TextStyle(
                   fontSize: 34,
                   fontWeight: FontWeight.bold,
