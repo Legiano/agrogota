@@ -1,9 +1,10 @@
 # 💧 AgroGota IrrigaTech
-Aplicativo mobile para manejo de irrigação voltado à agricultura familiar, desenvolvido em Flutter.
+
 <p align="center">
   <img src="assets/icon.png" alt="AgroGota IrrigaTech" width="200"/>
 </p>
 
+Aplicativo mobile para manejo de irrigação voltado à agricultura familiar, desenvolvido em Flutter.
 ## 📱 Sobre o projeto
 
 O AgroGota IrrigaTech auxilia pequenos produtores rurais a saberem exatamente quanto tempo devem deixar a irrigação ligada a cada dia, evitando desperdício de água e energia elétrica.
