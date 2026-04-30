@@ -1,10 +1,10 @@
-# 💧 IrrigaFácil
+# 💧 AgroGota IrrigaTech
 
 Aplicativo mobile para manejo de irrigação voltado à agricultura familiar, desenvolvido em Flutter.
 
 ## 📱 Sobre o projeto
 
-O IrrigaFácil auxilia pequenos produtores rurais a saberem exatamente quanto tempo devem deixar a irrigação ligada a cada dia, evitando desperdício de água e energia elétrica.
+O AgroGota IrrigaTech auxilia pequenos produtores rurais a saberem exatamente quanto tempo devem deixar a irrigação ligada a cada dia, evitando desperdício de água e energia elétrica.
 
 O app traduz cálculos científicos complexos em uma resposta simples e direta:
 > **"Ligue a irrigação por X minutos hoje."**
@@ -59,6 +59,7 @@ Todos os dados necessários estão dentro do app:
 - [Provider](https://pub.dev/packages/provider) — gerenciamento de estado
 
 ## 📂 Estrutura do projeto
+
 lib/
 ├── main.dart
 ├── db/
@@ -74,19 +75,20 @@ lib/
 ├── services/
 │   └── calculo_service.dart
 └── screens/
-├── welcome_screen.dart
-├── entrada_screen.dart
-├── resultado_screen.dart
-├── historico_screen.dart
-└── config_screen.dart
+    ├── welcome_screen.dart
+    ├── entrada_screen.dart
+    ├── resultado_screen.dart
+    ├── historico_screen.dart
+    └── config_screen.dart
+    
 ## 🚀 Como rodar o projeto
 
 ```bash
 # Clone o repositório
-git clone https://github.com/Legiano/irriga_facil.git
+git clone https://github.com/Legiano/agrogota.git
 
 # Entre na pasta
-cd irriga_facil
+cd AgroGota
 
 # Instale as dependências
 flutter pub get
@@ -111,4 +113,4 @@ build/app/outputs/flutter-apk/app-release.apk
 Projeto desenvolvido no **IFMS — Instituto Federal de Mato Grosso do Sul**
 ---
 
-© 2026 IrrigaFácil — IFMS
+© 2026 AgroGota IrrigaTech — IFMS
