@@ -1,7 +1,17 @@
 # 💧 AgroGota IrrigaTech
 
+
+
 <p align="center">
   <img src="assets/icon.png" alt="AgroGota IrrigaTech" width="200"/>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=flat&logo=flutter" alt="Flutter"/>
+  <img src="https://img.shields.io/badge/Dart-3.x-0175C2?style=flat&logo=dart" alt="Dart"/>
+  <img src="https://img.shields.io/badge/Android-APK-3DDC84?style=flat&logo=android" alt="Android"/>
+  <img src="https://img.shields.io/badge/Offline-100%25-1AAF72?style=flat" alt="Offline"/>
+  <img src="https://img.shields.io/badge/IFMS-2026-green?style=flat" alt="IFMS"/>
 </p>
 
 Aplicativo mobile para manejo de irrigação voltado à agricultura familiar, desenvolvido em Flutter.
