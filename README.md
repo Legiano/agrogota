@@ -1,7 +1,7 @@
 # 💧 AgroGota IrrigaTech
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Legiano/agrogota/main/assets/icon.png" alt="AgroGota IrrigaTech" width="200"/>
+  <img src="assets/icon.png" alt="AgroGota IrrigaTech" width="200"/>
 </p>
 
 Aplicativo mobile para manejo de irrigação voltado à agricultura familiar, desenvolvido em Flutter.
