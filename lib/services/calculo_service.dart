@@ -63,33 +63,33 @@ class CalculoService {
 
   // Cálculo completo: retorna Resultado
   static Resultado calcular({
-    required Solo solo,
-    required Cultura cultura,
-    required EntradaClimatica entrada,
-    double altitude = 400, // altitude média para MS
-  }) {
-    final eto = calcularETo(entrada, altitude);
-    final etc = eto * cultura.kc;
+  required Solo solo,
+  required Cultura cultura,
+  required EntradaClimatica entrada,
+  double altitude = 400,
+  double chuva = 0, // parâmetro novo
+}) {
+  final eto = calcularETo(entrada, altitude);
+  final etc = eto * cultura.kc;
 
-    // Lâmina de irrigação (mm)
-    final ad = solo.cc - solo.pmp;
-    const f = 0.5; // fator de disponibilidade padrão
-    final lamina = etc * f > ad * f ? ad * f : etc;
+  final ad = solo.cc - solo.pmp;
+  const f = 0.5;
+  double lamina = etc * f > ad * f ? ad * f : etc;
 
-    // Volume por planta (litros)
-    final volume = lamina * cultura.espacamento;
+  // Desconta a chuva da lâmina necessária
+  lamina = (lamina - chuva).clamp(0.0, double.infinity);
 
-    // Tempo de irrigação (minutos)
-    final vazaoMinuto = cultura.vazao / 60;
-    final tempoMin = volume / vazaoMinuto;
+  final volume = lamina * cultura.espacamento;
+  final vazaoMinuto = cultura.vazao / 60;
+  final tempoMin = vazaoMinuto > 0 ? volume / vazaoMinuto : 0.0;
 
-    return Resultado(
-      data: entrada.data,
-      eto: double.parse(eto.toStringAsFixed(2)),
-      etc: double.parse(etc.toStringAsFixed(2)),
-      lamina: double.parse(lamina.toStringAsFixed(2)),
-      volume: double.parse(volume.toStringAsFixed(2)),
-      tempoMin: double.parse(tempoMin.toStringAsFixed(1)),
-    );
-  }
+  return Resultado(
+    data: entrada.data,
+    eto: double.parse(eto.toStringAsFixed(2)),
+    etc: double.parse(etc.toStringAsFixed(2)),
+    lamina: double.parse(lamina.toStringAsFixed(2)),
+    volume: double.parse(volume.toStringAsFixed(2)),
+    tempoMin: double.parse(tempoMin.toStringAsFixed(1)),
+  );
+}
 }

@@ -17,14 +17,15 @@ class _EntradaScreenState extends State<EntradaScreen> {
   final _formKey = GlobalKey<FormState>();
   final db = DatabaseHelper();
 
-  // Campos em branco — obriga o produtor a digitar
   final _tMaxCtrl = TextEditingController();
   final _tMinCtrl = TextEditingController();
   final _urMaxCtrl = TextEditingController();
   final _urMinCtrl = TextEditingController();
   final _radiacaoCtrl = TextEditingController();
+  final _chuvaCtrl = TextEditingController();
 
   bool _radiacaoManual = false;
+  bool _choveuHoje = false;
   bool _calculando = false;
   double _radiacaoEstimada = 0;
 
@@ -42,6 +43,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
     _urMaxCtrl.dispose();
     _urMinCtrl.dispose();
     _radiacaoCtrl.dispose();
+    _chuvaCtrl.dispose();
     super.dispose();
   }
 
@@ -53,6 +55,8 @@ class _EntradaScreenState extends State<EntradaScreen> {
         return 'ex: 75';
       case 'MJ/m²':
         return 'ex: 19.4';
+      case 'mm':
+        return 'ex: 10';
       default:
         return '0';
     }
@@ -79,6 +83,10 @@ class _EntradaScreenState extends State<EntradaScreen> {
 
     setState(() => _calculando = true);
 
+    final chuva = _choveuHoje
+        ? (double.tryParse(_chuvaCtrl.text) ?? 0)
+        : 0.0;
+
     final entrada = EntradaClimatica(
       data: DateTime.now(),
       tMax: double.parse(_tMaxCtrl.text),
@@ -93,6 +101,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
       solo: solo,
       cultura: cultura,
       entrada: entrada,
+      chuva: chuva,
     );
 
     await db.salvarEntrada(entrada);
@@ -159,6 +168,96 @@ class _EntradaScreenState extends State<EntradaScreen> {
                     _urMaxCtrl, '%', campoWidth),
                 _campoNumerico('Umidade mais baixa do dia',
                     _urMinCtrl, '%', campoWidth),
+              ]),
+              const SizedBox(height: 16),
+              _secaoTitulo('Chuva de hoje'),
+              _card([
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 4, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _choveuHoje
+                                  ? 'Choveu hoje!'
+                                  : 'Não choveu hoje',
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _choveuHoje
+                                  ? 'Informe a quantidade de chuva abaixo'
+                                  : 'A irrigação será calculada normalmente',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade500),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Transform.scale(
+                        scale: 0.85,
+                        child: Switch(
+                          value: _choveuHoje,
+                          activeThumbColor: const Color(0xFF1AAF72),
+                          activeTrackColor: const Color(0xFF1AAF72)
+                              .withValues(alpha: 0.3),
+                          inactiveThumbColor: Colors.grey.shade400,
+                          inactiveTrackColor: Colors.grey.shade200,
+                          onChanged: (v) {
+                            setState(() {
+                              _choveuHoje = v;
+                              if (!v) _chuvaCtrl.clear();
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_choveuHoje) ...[
+                  const SizedBox(height: 10),
+                  _campoNumerico(
+                    'Quantidade de chuva',
+                    _chuvaCtrl,
+                    'mm',
+                    campoWidth,
+                    enabled: true,
+                    obrigatorio: true,
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F4FD),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline,
+                            color: Colors.blue, size: 14),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'A chuva será descontada da irrigação necessária.',
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ]),
               const SizedBox(height: 16),
               _secaoTitulo('Luz solar'),
@@ -291,6 +390,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
     String unidade,
     double campoWidth, {
     bool enabled = true,
+    bool obrigatorio = false,
   }) =>
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
@@ -321,8 +421,8 @@ class _EntradaScreenState extends State<EntradaScreen> {
                   fontSize: 13,
                   color: Colors.grey.shade400,
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 8),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(6)),
                 enabledBorder: OutlineInputBorder(
@@ -330,10 +430,21 @@ class _EntradaScreenState extends State<EntradaScreen> {
                   borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
               ),
-              validator: (v) =>
-                  (v == null || v.isEmpty || double.tryParse(v) == null)
-                      ? 'Preencha'
-                      : null,
+              validator: (v) {
+                if (obrigatorio &&
+                    (v == null ||
+                        v.isEmpty ||
+                        double.tryParse(v) == null)) {
+                  return 'Preencha';
+                }
+                if (!obrigatorio &&
+                    v != null &&
+                    v.isNotEmpty &&
+                    double.tryParse(v) == null) {
+                  return 'Inválido';
+                }
+                return null;
+              },
             ),
           ),
           const SizedBox(width: 6),

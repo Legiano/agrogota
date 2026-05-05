@@ -4,6 +4,7 @@ import '../models/solo.dart';
 import '../models/cultura.dart';
 import '../services/calculo_service.dart';
 import '../data/kc_data.dart';
+import '../data/solo_data.dart';
 
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
@@ -23,9 +24,11 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
   String _culturaSelecionada = 'Alface';
   String _estagioSelecionado = 'intermediario';
+  String _classeSoloSelecionada = 'Franco';
   double _cc = 0;
   double _pmp = 0;
   bool _jaConfigurado = false;
+  bool _modoAvancado = false;
 
   final Map<String, String> _estagioLabels = {
     'inicial': 'Inicial — planta nova',
@@ -50,7 +53,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   void initState() {
     super.initState();
     _carregarDados();
-    _calcularSolo();
+    _aplicarClasseSolo(_classeSoloSelecionada);
   }
 
   @override
@@ -60,6 +63,18 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _espacamentoCtrl.dispose();
     _vazaoCtrl.dispose();
     super.dispose();
+  }
+
+  void _aplicarClasseSolo(String classe) {
+    final silte = SoloData.getSilte(classe);
+    final argila = SoloData.getArgila(classe);
+    setState(() {
+      _classeSoloSelecionada = classe;
+      _silteCtrl.text = silte.toStringAsFixed(0);
+      _argilaCtrl.text = argila.toStringAsFixed(0);
+      _cc = CalculoService.calcularCC(silte, argila);
+      _pmp = CalculoService.calcularPMP(silte, argila);
+    });
   }
 
   void _calcularSolo() {
@@ -158,7 +173,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
         _vazaoCtrl.clear();
         _culturaSelecionada = 'Alface';
         _estagioSelecionado = 'intermediario';
+        _classeSoloSelecionada = 'Franco';
         _jaConfigurado = false;
+        _modoAvancado = false;
       });
       _calcularSolo();
 
@@ -209,53 +226,93 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   ),
                   child: const Row(
                     children: [
-                      Icon(
-                        Icons.edit_outlined,
-                        color: Color(0xFF1AAF72),
-                        size: 18,
-                      ),
+                      Icon(Icons.edit_outlined,
+                          color: Color(0xFF1AAF72), size: 18),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Algo mudou? Atualize aqui e salve.',
                           style: TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF0F6E56),
-                          ),
+                              fontSize: 13, color: Color(0xFF0F6E56)),
                         ),
                       ),
                     ],
                   ),
                 ),
-              _secaoTitulo('Solo'),
+
+              // SEÇÃO SOLO
+              _secaoTitulo('Tipo de solo'),
               _card([
-                _campoNumerico(
-                  'Silte do solo',
-                  _silteCtrl,
-                  '%',
-                  onChange: _calcularSolo,
-                ),
-                _campoNumerico(
-                  'Argila do solo',
-                  _argilaCtrl,
-                  '%',
-                  onChange: _calcularSolo,
+                // Dropdown tipo de solo
+                _dropdownPadronizado(
+                  label: 'Qual é o tipo do seu solo?',
+                  valor: _classeSoloSelecionada,
+                  opcoes: SoloData.getClasses(),
+                  labelMap: null,
+                  onChange: (v) => _aplicarClasseSolo(v!),
                 ),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    _resultadoSolo(
-                      'Água máxima\nno solo',
-                      '${_cc.toStringAsFixed(1)}%',
-                    ),
-                    const SizedBox(width: 8),
-                    _resultadoSolo(
-                      'Limite mínimo\nde água',
-                      '${_pmp.toStringAsFixed(1)}%',
-                    ),
-                  ],
+                // Descrição do solo selecionado
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    SoloData.getDescricao(_classeSoloSelecionada),
+                    style: const TextStyle(
+                        fontSize: 12, color: Color(0xFF888780)),
+                  ),
                 ),
+                const SizedBox(height: 10),
+                // Resultados CC e PMP
+                Row(children: [
+                  _resultadoSolo(
+                      'Água máxima\nno solo',
+                      '${_cc.toStringAsFixed(1)}%'),
+                  const SizedBox(width: 8),
+                  _resultadoSolo(
+                      'Limite mínimo\nde água',
+                      '${_pmp.toStringAsFixed(1)}%'),
+                ]),
+                const SizedBox(height: 8),
+                // Modo avançado
+                GestureDetector(
+                  onTap: () =>
+                      setState(() => _modoAvancado = !_modoAvancado),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _modoAvancado
+                            ? Icons.expand_less
+                            : Icons.expand_more,
+                        color: const Color(0xFF1AAF72),
+                        size: 18,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _modoAvancado
+                            ? 'Ocultar valores detalhados'
+                            : 'Ver ou editar valores detalhados',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF1AAF72),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_modoAvancado) ...[
+                  const SizedBox(height: 8),
+                  _campoNumerico('Silte do solo', _silteCtrl, '%',
+                      onChange: _calcularSolo),
+                  _campoNumerico('Argila do solo', _argilaCtrl, '%',
+                      onChange: _calcularSolo),
+                ],
               ]),
+
               const SizedBox(height: 16),
               _secaoTitulo('Cultura'),
               _card([
@@ -275,12 +332,15 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   onChange: (v) => setState(() => _estagioSelecionado = v!),
                 ),
               ]),
+
               const SizedBox(height: 16),
               _secaoTitulo('Sistema de irrigação'),
               _card([
                 _campoNumerico('Área por planta', _espacamentoCtrl, 'm²'),
-                _campoNumerico('Água por hora do gotejador', _vazaoCtrl, 'L/h'),
+                _campoNumerico(
+                    'Água por hora do gotejador', _vazaoCtrl, 'L/h'),
               ]),
+
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -290,7 +350,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
                     _jaConfigurado ? Icons.save_outlined : Icons.check,
                   ),
                   label: Text(
-                    _jaConfigurado ? 'Salvar alterações' : 'Salvar e começar',
+                    _jaConfigurado
+                        ? 'Salvar alterações'
+                        : 'Salvar e começar',
                     style: const TextStyle(fontSize: 15),
                   ),
                   style: ElevatedButton.styleFrom(
@@ -311,28 +373,28 @@ class _ConfigScreenState extends State<ConfigScreen> {
   }
 
   Widget _secaoTitulo(String titulo) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      titulo.toUpperCase(),
-      style: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: Colors.grey,
-        letterSpacing: 1,
-      ),
-    ),
-  );
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(
+          titulo.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey,
+            letterSpacing: 1,
+          ),
+        ),
+      );
 
   Widget _card(List<Widget> children) => Container(
-    margin: const EdgeInsets.only(bottom: 4),
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: Colors.grey.shade200),
-    ),
-    child: Column(children: children),
-  );
+        margin: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(children: children),
+      );
 
   Widget _dropdownPadronizado({
     required String label,
@@ -340,122 +402,126 @@ class _ConfigScreenState extends State<ConfigScreen> {
     required List<String> opcoes,
     required Map<String, String>? labelMap,
     required void Function(String?) onChange,
-  }) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      const SizedBox(height: 6),
-      DropdownButtonFormField<String>(
-        initialValue: valor,
-        isExpanded: true,
-        decoration: InputDecoration(
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
-          ),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFF1AAF72), width: 1.5),
-          ),
-        ),
-        items: opcoes
-            .map(
-              (o) => DropdownMenuItem(
-                value: o,
-                child: Text(
-                  labelMap != null ? (labelMap[o] ?? o) : o,
-                  style: const TextStyle(fontSize: 14),
-                ),
+  }) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<String>(
+            initialValue: valor,
+            isExpanded: true,
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-            )
-            .toList(),
-        onChanged: onChange,
-      ),
-    ],
-  );
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                    color: Color(0xFF1AAF72), width: 1.5),
+              ),
+            ),
+            items: opcoes
+                .map((o) => DropdownMenuItem(
+                      value: o,
+                      child: Text(
+                        labelMap != null ? (labelMap[o] ?? o) : o,
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ))
+                .toList(),
+            onChanged: onChange,
+          ),
+        ],
+      );
 
   Widget _campoNumerico(
     String label,
     TextEditingController ctrl,
     String unidade, {
     VoidCallback? onChange,
-  }) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Row(
-      children: [
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
-        SizedBox(
-          width: 80,
-          child: TextFormField(
-            controller: ctrl,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textAlign: TextAlign.right,
-            style: const TextStyle(fontSize: 13),
-            decoration: InputDecoration(
-              isDense: true,
-              hintText: _getHint(unidade),
-              hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 8,
-                vertical: 8,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+  }) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          children: [
+            Expanded(
+                child:
+                    Text(label, style: const TextStyle(fontSize: 13))),
+            SizedBox(
+              width: 80,
+              child: TextFormField(
+                controller: ctrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                textAlign: TextAlign.right,
+                style: const TextStyle(fontSize: 13),
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: _getHint(unidade),
+                  hintStyle: TextStyle(
+                      fontSize: 13, color: Colors.grey.shade400),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 8),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
+                onChanged: (_) => onChange?.call(),
+                validator: (v) =>
+                    (v == null || v.isEmpty || double.tryParse(v) == null)
+                        ? 'Inválido'
+                        : null,
               ),
             ),
-            onChanged: (_) => onChange?.call(),
-            validator: (v) =>
-                (v == null || v.isEmpty || double.tryParse(v) == null)
-                ? 'Inválido'
-                : null,
-          ),
+            const SizedBox(width: 6),
+            SizedBox(
+              width: 28,
+              child: Text(
+                unidade,
+                style:
+                    const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 6),
-        SizedBox(
-          width: 28,
-          child: Text(
-            unidade,
-            style: const TextStyle(fontSize: 11, color: Colors.grey),
-          ),
-        ),
-      ],
-    ),
-  );
+      );
 
   Widget _resultadoSolo(String label, String valor) => Expanded(
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE1F5EE),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE1F5EE),
+            borderRadius: BorderRadius.circular(8),
           ),
-          Text(
-            valor,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF1AAF72),
-            ),
+          child: Column(
+            children: [
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style:
+                    const TextStyle(fontSize: 10, color: Colors.grey),
+              ),
+              Text(
+                valor,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1AAF72),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 }
