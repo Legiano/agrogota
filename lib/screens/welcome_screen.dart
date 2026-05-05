@@ -50,13 +50,25 @@ class WelcomeScreen extends StatelessWidget {
                 'Funciona sem internet',
                 'Use no campo sem precisar de conexão',
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               _infoCard(
                 Icons.wb_sunny_outlined,
                 'Cálculo pelo clima do dia',
                 'Baseado na temperatura e umidade de hoje',
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
+              _infoCard(
+                Icons.landscape_outlined,
+                'Solos do Mato Grosso do Sul',
+                'Banco de dados com tipos de solo por município',
+              ),
+              const SizedBox(height: 10),
+              _infoCard(
+                Icons.water_outlined,
+                'Balanço hídrico mensal',
+                'Déficit e excedente de água por época do ano',
+              ),
+              const SizedBox(height: 10),
               _infoCard(
                 Icons.timer_outlined,
                 'Resultado simples',
@@ -99,7 +111,7 @@ class WelcomeScreen extends StatelessWidget {
 
   Widget _infoCard(IconData icone, String titulo, String subtitulo) =>
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: const Color(0xFFF5F5F5),
           borderRadius: BorderRadius.circular(12),
@@ -107,13 +119,13 @@ class WelcomeScreen extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: const Color(0xFF1AAF72),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icone, color: Colors.white, size: 22),
+              child: Icon(icone, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -123,7 +135,7 @@ class WelcomeScreen extends StatelessWidget {
                   Text(
                     titulo,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF2C2C2A),
                     ),
@@ -132,7 +144,7 @@ class WelcomeScreen extends StatelessWidget {
                   Text(
                     subtitulo,
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: Color(0xFF888780),
                     ),
                   ),
