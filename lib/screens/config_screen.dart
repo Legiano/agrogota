@@ -5,6 +5,7 @@ import '../models/cultura.dart';
 import '../services/calculo_service.dart';
 import '../data/kc_data.dart';
 import '../data/solo_data.dart';
+import '../data/regioes_ms_data.dart';
 
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
@@ -25,10 +26,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
   String _culturaSelecionada = 'Alface';
   String _estagioSelecionado = 'intermediario';
   String _classeSoloSelecionada = 'Franco';
+  String _regiaoSelecionada = 'Central';
+  String? _municipioSelecionado;
   double _cc = 0;
   double _pmp = 0;
   bool _jaConfigurado = false;
   bool _modoAvancado = false;
+  bool _usarMunicipio = false;
 
   final Map<String, String> _estagioLabels = {
     'inicial': 'Inicial — planta nova',
@@ -75,6 +79,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
       _cc = CalculoService.calcularCC(silte, argila);
       _pmp = CalculoService.calcularPMP(silte, argila);
     });
+  }
+
+  void _aplicarMunicipio(String municipio) {
+    final classe = RegioesMSData.getSoloPorMunicipio(municipio);
+    setState(() => _municipioSelecionado = municipio);
+    _aplicarClasseSolo(classe);
   }
 
   void _calcularSolo() {
@@ -150,7 +160,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancelar',
+                style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
@@ -174,8 +185,11 @@ class _ConfigScreenState extends State<ConfigScreen> {
         _culturaSelecionada = 'Alface';
         _estagioSelecionado = 'intermediario';
         _classeSoloSelecionada = 'Franco';
+        _regiaoSelecionada = 'Central';
+        _municipioSelecionado = null;
         _jaConfigurado = false;
         _modoAvancado = false;
+        _usarMunicipio = false;
       });
       _calcularSolo();
 
@@ -192,6 +206,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final municipiosDaRegiao =
+        RegioesMSData.getMunicipiosPorRegiao(_regiaoSelecionada);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -240,10 +257,122 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   ),
                 ),
 
+              // SEÇÃO LOCALIZAÇÃO
+              _secaoTitulo('Sua localização no MS'),
+              _card([
+                // Switch usar município
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 4, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _usarMunicipio
+                                  ? 'Usando solo da minha cidade'
+                                  : 'Selecionar pelo município',
+                              style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _usarMunicipio
+                                  ? 'Solo definido pelo mapa do MS'
+                                  : 'Recomendado para produtores do MS',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade500),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Transform.scale(
+                        scale: 0.85,
+                        child: Switch(
+                          value: _usarMunicipio,
+                          activeThumbColor: const Color(0xFF1AAF72),
+                          activeTrackColor: const Color(0xFF1AAF72)
+                              .withValues(alpha: 0.3),
+                          inactiveThumbColor: Colors.grey.shade400,
+                          inactiveTrackColor: Colors.grey.shade200,
+                          onChanged: (v) {
+                            setState(() {
+                              _usarMunicipio = v;
+                              if (!v) _municipioSelecionado = null;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_usarMunicipio) ...[
+                  const SizedBox(height: 10),
+                  // Seletor de região
+                  _dropdownPadronizado(
+                    label: 'Região do MS',
+                    valor: _regiaoSelecionada,
+                    opcoes: RegioesMSData.getRegioes(),
+                    labelMap: null,
+                    onChange: (v) {
+                      setState(() {
+                        _regiaoSelecionada = v!;
+                        _municipioSelecionado = null;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  // Seletor de município
+                  if (municipiosDaRegiao.isNotEmpty)
+                    _dropdownPadronizado(
+                      label: 'Município',
+                      valor: _municipioSelecionado ??
+                          municipiosDaRegiao.first,
+                      opcoes: municipiosDaRegiao,
+                      labelMap: null,
+                      onChange: (v) => _aplicarMunicipio(v!),
+                    ),
+                  if (_municipioSelecionado != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE1F5EE),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.location_on,
+                              color: Color(0xFF1AAF72), size: 16),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Solo de $_municipioSelecionado: $_classeSoloSelecionada',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF0F6E56)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ]),
+
+              const SizedBox(height: 16),
+
               // SEÇÃO SOLO
               _secaoTitulo('Tipo de solo'),
               _card([
-                // Dropdown tipo de solo
                 _dropdownPadronizado(
                   label: 'Qual é o tipo do seu solo?',
                   valor: _classeSoloSelecionada,
@@ -252,7 +381,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   onChange: (v) => _aplicarClasseSolo(v!),
                 ),
                 const SizedBox(height: 8),
-                // Descrição do solo selecionado
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
@@ -267,18 +395,14 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // Resultados CC e PMP
                 Row(children: [
-                  _resultadoSolo(
-                      'Água máxima\nno solo',
+                  _resultadoSolo('Água máxima\nno solo',
                       '${_cc.toStringAsFixed(1)}%'),
                   const SizedBox(width: 8),
-                  _resultadoSolo(
-                      'Limite mínimo\nde água',
+                  _resultadoSolo('Limite mínimo\nde água',
                       '${_pmp.toStringAsFixed(1)}%'),
                 ]),
                 const SizedBox(height: 8),
-                // Modo avançado
                 GestureDetector(
                   onTap: () =>
                       setState(() => _modoAvancado = !_modoAvancado),
@@ -321,7 +445,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   valor: _culturaSelecionada,
                   opcoes: KcData.getCulturas(),
                   labelMap: null,
-                  onChange: (v) => setState(() => _culturaSelecionada = v!),
+                  onChange: (v) =>
+                      setState(() => _culturaSelecionada = v!),
                 ),
                 const Divider(height: 16, color: Color(0xFFEEEEEE)),
                 _dropdownPadronizado(
@@ -329,14 +454,16 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   valor: _estagioSelecionado,
                   opcoes: ['inicial', 'intermediario', 'final'],
                   labelMap: _estagioLabels,
-                  onChange: (v) => setState(() => _estagioSelecionado = v!),
+                  onChange: (v) =>
+                      setState(() => _estagioSelecionado = v!),
                 ),
               ]),
 
               const SizedBox(height: 16),
               _secaoTitulo('Sistema de irrigação'),
               _card([
-                _campoNumerico('Área por planta', _espacamentoCtrl, 'm²'),
+                _campoNumerico(
+                    'Área por planta', _espacamentoCtrl, 'm²'),
                 _campoNumerico(
                     'Água por hora do gotejador', _vazaoCtrl, 'L/h'),
               ]),
