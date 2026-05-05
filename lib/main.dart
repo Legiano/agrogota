@@ -4,19 +4,19 @@ import 'screens/config_screen.dart';
 import 'screens/entrada_screen.dart';
 import 'screens/resultado_screen.dart';
 import 'screens/historico_screen.dart';
-import 'screens/welcome_screen.dart';
 import 'models/resultado.dart';
+import 'screens/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-  final primeiroAcesso = prefs.getBool('primeiro_acesso') ?? true;
-  runApp(IrrigaFacilApp(primeiroAcesso: primeiroAcesso));
+  final onboardingVisto = prefs.getBool('onboarding_visto') ?? false;
+  runApp(IrrigaFacilApp(rotaInicial: onboardingVisto ? '/home' : '/onboarding'));
 }
 
 class IrrigaFacilApp extends StatelessWidget {
-  final bool primeiroAcesso;
-  const IrrigaFacilApp({super.key, required this.primeiroAcesso});
+  final String rotaInicial;
+  const IrrigaFacilApp({super.key, required this.rotaInicial});
 
   @override
   Widget build(BuildContext context) {
@@ -31,15 +31,14 @@ class IrrigaFacilApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Roboto',
       ),
-      initialRoute: primeiroAcesso ? '/welcome' : '/home',
+      initialRoute: rotaInicial,
       routes: {
-        '/welcome': (context) => const WelcomeScreen(),
+        '/onboarding': (context) => const OnboardingScreen(),
         '/home': (context) => const MainNavigation(),
       },
     );
   }
 }
-
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 

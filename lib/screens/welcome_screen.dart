@@ -9,25 +9,26 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(28, 24, 28, 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Spacer(),
+              const SizedBox(height: 20),
               // Imagem do professor
               Image.asset(
                 'assets/icon.png',
-                width: 120,
-                height: 120,
+                width: 110,
+                height: 110,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               // Título
               const Text(
                 'AgroGota IrrigaTech',
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 34,
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1AAF72),
                 ),
@@ -43,7 +44,7 @@ class WelcomeScreen extends StatelessWidget {
                   height: 1.5,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 32),
               // Cards de info
               _infoCard(
                 Icons.wifi_off,
@@ -74,7 +75,7 @@ class WelcomeScreen extends StatelessWidget {
                 'Resultado simples',
                 'Ligue e desligue a irrigação no tempo certo',
               ),
-              const Spacer(),
+              const SizedBox(height: 32),
               // Botão
               SizedBox(
                 width: double.infinity,
@@ -101,7 +102,14 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 12),
+              // Rodapé
+              const Text(
+                'AgroGota IrrigaTech © 2026 — IFMS',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+              const SizedBox(height: 8),
             ],
           ),
         ),
