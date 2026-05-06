@@ -40,7 +40,7 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Saiba o tempo certo de irrigar sua lavoura',
+                       'Ciência no campo. Água na medida certa.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontSize: 14, color: Color(0xFF888780)),
@@ -98,7 +98,7 @@ class OnboardingScreen extends StatelessWidget {
               _itemPasso(Icons.grass_outlined,
                   'Escolha o que está plantando — Alface, Tomate, Milho e mais 7 culturas'),
               _itemPasso(Icons.water_drop_outlined,
-                  'Informe a vazão do gotejador e a área por planta'),
+                  'Informe a vazão, a área por planta e a quantidade de gotejadores'),
               _itemPasso(Icons.save_outlined,
                   'Clique em Salvar e começar — pronto, nunca mais precisa mexer nisso'),
               const SizedBox(height: 20),

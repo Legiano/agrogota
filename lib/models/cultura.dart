@@ -1,10 +1,11 @@
 class Cultura {
   int? id;
   String nome;
-  String estagio; // inicial, intermediario, final
+  String estagio;
   double kc;
   double espacamento; // m²
   double vazao;       // L/h
+  int gotejadores;    // quantidade por planta
 
   Cultura({
     this.id,
@@ -13,6 +14,7 @@ class Cultura {
     required this.kc,
     required this.espacamento,
     required this.vazao,
+    this.gotejadores = 1, // padrão 1 gotejador por planta
   });
 
   Map<String, dynamic> toMap() => {
@@ -22,6 +24,7 @@ class Cultura {
     'kc': kc,
     'espacamento': espacamento,
     'vazao': vazao,
+    'gotejadores': gotejadores,
   };
 
   factory Cultura.fromMap(Map<String, dynamic> map) => Cultura(
@@ -31,5 +34,6 @@ class Cultura {
     kc: map['kc'],
     espacamento: map['espacamento'],
     vazao: map['vazao'],
+    gotejadores: map['gotejadores'] ?? 1,
   );
 }

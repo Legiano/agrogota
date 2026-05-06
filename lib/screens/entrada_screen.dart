@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../db/database_helper.dart';
 import '../models/entrada_climatica.dart';
 import '../models/resultado.dart';
@@ -62,6 +63,31 @@ class _EntradaScreenState extends State<EntradaScreen> {
     }
   }
 
+  // Validação por tipo de campo
+  String? _validar(String? v, String unidade, {bool obrigatorio = false}) {
+    if (v == null || v.isEmpty) {
+      return obrigatorio ? 'Preencha' : null;
+    }
+    final valor = double.tryParse(v.replaceAll(',', '.'));
+    if (valor == null) return 'Número inválido';
+
+    switch (unidade) {
+      case '°C':
+        if (valor < 10 || valor > 99) return 'Entre 10 e 99°C';
+        break;
+      case '%':
+        if (valor < 1 || valor > 99) return 'Entre 1 e 99%';
+        break;
+      case 'mm':
+        if (valor < 0 || valor > 500) return 'Entre 0 e 500mm';
+        break;
+      case 'MJ/m²':
+        if (valor < 1 || valor > 40) return 'Entre 1 e 40';
+        break;
+    }
+    return null;
+  }
+
   Future<void> _calcular() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -84,16 +110,16 @@ class _EntradaScreenState extends State<EntradaScreen> {
     setState(() => _calculando = true);
 
     final chuva = _choveuHoje
-        ? (double.tryParse(_chuvaCtrl.text) ?? 0)
+        ? (double.tryParse(_chuvaCtrl.text.replaceAll(',', '.')) ?? 0)
         : 0.0;
 
     final entrada = EntradaClimatica(
       data: DateTime.now(),
-      tMax: double.parse(_tMaxCtrl.text),
-      tMin: double.parse(_tMinCtrl.text),
-      urMax: double.parse(_urMaxCtrl.text),
-      urMin: double.parse(_urMinCtrl.text),
-      radiacao: double.parse(_radiacaoCtrl.text),
+      tMax: double.parse(_tMaxCtrl.text.replaceAll(',', '.')),
+      tMin: double.parse(_tMinCtrl.text.replaceAll(',', '.')),
+      urMax: double.parse(_urMaxCtrl.text.replaceAll(',', '.')),
+      urMin: double.parse(_urMinCtrl.text.replaceAll(',', '.')),
+      radiacao: double.parse(_radiacaoCtrl.text.replaceAll(',', '.')),
       radiacaoEstimada: !_radiacaoManual,
     );
 
@@ -154,6 +180,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
                   ],
                 ),
               ),
+
               _secaoTitulo('Temperatura (termômetro)'),
               _card([
                 _campoNumerico('Temperatura mais alta do dia',
@@ -162,6 +189,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
                     _tMinCtrl, '°C', campoWidth),
               ]),
               const SizedBox(height: 16),
+
               _secaoTitulo('Umidade do ar (higrômetro)'),
               _card([
                 _campoNumerico('Umidade mais alta do dia',
@@ -170,6 +198,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
                     _urMinCtrl, '%', campoWidth),
               ]),
               const SizedBox(height: 16),
+
               _secaoTitulo('Chuva de hoje'),
               _card([
                 Container(
@@ -260,6 +289,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
                 ],
               ]),
               const SizedBox(height: 16),
+
               _secaoTitulo('Luz solar'),
               _card([
                 Container(
@@ -330,6 +360,7 @@ class _EntradaScreenState extends State<EntradaScreen> {
                 ],
               ]),
               const SizedBox(height: 24),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -413,9 +444,14 @@ class _EntradaScreenState extends State<EntradaScreen> {
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               textAlign: TextAlign.right,
+              maxLength: unidade == '°C' || unidade == '%' ? 2 : null,
+              inputFormatters: unidade == '°C' || unidade == '%'
+                  ? [FilteringTextInputFormatter.digitsOnly]
+                  : null,
               style: const TextStyle(fontSize: 13),
               decoration: InputDecoration(
                 isDense: true,
+                counterText: '',
                 hintText: _getHint(unidade),
                 hintStyle: TextStyle(
                   fontSize: 13,
@@ -430,21 +466,8 @@ class _EntradaScreenState extends State<EntradaScreen> {
                   borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
               ),
-              validator: (v) {
-                if (obrigatorio &&
-                    (v == null ||
-                        v.isEmpty ||
-                        double.tryParse(v) == null)) {
-                  return 'Preencha';
-                }
-                if (!obrigatorio &&
-                    v != null &&
-                    v.isNotEmpty &&
-                    double.tryParse(v) == null) {
-                  return 'Inválido';
-                }
-                return null;
-              },
+              validator: (v) => _validar(v, unidade,
+                  obrigatorio: obrigatorio || v?.isNotEmpty == true),
             ),
           ),
           const SizedBox(width: 6),

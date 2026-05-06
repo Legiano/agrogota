@@ -19,7 +19,17 @@ class DatabaseHelper {
 
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'irriga_facil.db');
-    return openDatabase(path, version: 1, onCreate: _onCreate);
+    return openDatabase(
+      path,
+      version: 2,
+      onCreate: _onCreate,
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute(
+              'ALTER TABLE cultura ADD COLUMN gotejadores INTEGER DEFAULT 1');
+        }
+      },
+    );
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -33,7 +43,8 @@ class DatabaseHelper {
       CREATE TABLE cultura (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT, estagio TEXT, kc REAL,
-        espacamento REAL, vazao REAL
+        espacamento REAL, vazao REAL,
+        gotejadores INTEGER DEFAULT 1
       )
     ''');
     await db.execute('''
@@ -101,15 +112,15 @@ class DatabaseHelper {
   }
 
   // Excluir resultado do histórico
-   Future<void> excluirResultado(int id) async {
-   final db = await database;
-   await db.delete('resultado', where: 'id = ?', whereArgs: [id]);
-}
- 
+  Future<void> excluirResultado(int id) async {
+    final db = await database;
+    await db.delete('resultado', where: 'id = ?', whereArgs: [id]);
+  }
+
   // Limpar configurações (solo e cultura)
-   Future<void> limparConfiguracoes() async {
-   final db = await database;
-   await db.delete('solo');
-   await db.delete('cultura');
-}
+  Future<void> limparConfiguracoes() async {
+    final db = await database;
+    await db.delete('solo');
+    await db.delete('cultura');
+  }
 }

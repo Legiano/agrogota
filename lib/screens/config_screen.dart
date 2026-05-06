@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../db/database_helper.dart';
 import '../models/solo.dart';
 import '../models/cultura.dart';
@@ -22,6 +23,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   final _argilaCtrl = TextEditingController();
   final _espacamentoCtrl = TextEditingController();
   final _vazaoCtrl = TextEditingController();
+  final _gotejadoresCtrl = TextEditingController(text: '1');
 
   String _culturaSelecionada = 'Alface';
   String _estagioSelecionado = 'intermediario';
@@ -45,12 +47,39 @@ class _ConfigScreenState extends State<ConfigScreen> {
       case '%':
         return 'ex: 30';
       case 'm²':
-        return 'ex: 0.25';
+        return 'ex: 0.06';
       case 'L/h':
         return 'ex: 2.5';
+      case 'un':
+        return 'ex: 1';
       default:
         return '0';
     }
+  }
+
+  String? _validar(String? v, String unidade) {
+    if (v == null || v.isEmpty) return 'Preencha';
+    final valor = double.tryParse(v.replaceAll(',', '.'));
+    if (valor == null) return 'Número inválido';
+
+    switch (unidade) {
+      case '%':
+        if (valor < 1 || valor > 99) return 'Entre 1 e 99%';
+        break;
+      case 'm²':
+        if (valor < 0.001 || valor > 30) return '0,001 a 30 m²';
+        break;
+      case 'L/h':
+        if (valor < 0.1 || valor > 100) return '0,1 a 100 L/h';
+        break;
+      case 'un':
+        final intVal = int.tryParse(v);
+        if (intVal == null || intVal < 1 || intVal > 20) {
+          return '1 a 20 un';
+        }
+        break;
+    }
+    return null;
   }
 
   @override
@@ -66,6 +95,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
     _argilaCtrl.dispose();
     _espacamentoCtrl.dispose();
     _vazaoCtrl.dispose();
+    _gotejadoresCtrl.dispose();
     super.dispose();
   }
 
@@ -111,14 +141,15 @@ class _ConfigScreenState extends State<ConfigScreen> {
         _estagioSelecionado = cultura.estagio;
         _espacamentoCtrl.text = cultura.espacamento.toString();
         _vazaoCtrl.text = cultura.vazao.toString();
+        _gotejadoresCtrl.text = cultura.gotejadores.toString();
       });
     }
   }
 
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
-    final silte = double.parse(_silteCtrl.text);
-    final argila = double.parse(_argilaCtrl.text);
+    final silte = double.parse(_silteCtrl.text.replaceAll(',', '.'));
+    final argila = double.parse(_argilaCtrl.text.replaceAll(',', '.'));
     final cc = CalculoService.calcularCC(silte, argila);
     final pmp = CalculoService.calcularPMP(silte, argila);
 
@@ -128,8 +159,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
         nome: _culturaSelecionada,
         estagio: _estagioSelecionado,
         kc: KcData.getKc(_culturaSelecionada, _estagioSelecionado),
-        espacamento: double.parse(_espacamentoCtrl.text),
-        vazao: double.parse(_vazaoCtrl.text),
+        espacamento: double.parse(_espacamentoCtrl.text.replaceAll(',', '.')),
+        vazao: double.parse(_vazaoCtrl.text.replaceAll(',', '.')),
+        gotejadores: int.tryParse(_gotejadoresCtrl.text) ?? 1,
       ),
     );
 
@@ -182,6 +214,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
         _argilaCtrl.clear();
         _espacamentoCtrl.clear();
         _vazaoCtrl.clear();
+        _gotejadoresCtrl.text = '1';
         _culturaSelecionada = 'Alface';
         _estagioSelecionado = 'intermediario';
         _classeSoloSelecionada = 'Franco';
@@ -260,7 +293,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
               // SEÇÃO LOCALIZAÇÃO
               _secaoTitulo('Sua localização no MS'),
               _card([
-                // Switch usar município
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 4, vertical: 4),
@@ -316,7 +348,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                 ),
                 if (_usarMunicipio) ...[
                   const SizedBox(height: 10),
-                  // Seletor de região
                   _dropdownPadronizado(
                     label: 'Região do MS',
                     valor: _regiaoSelecionada,
@@ -330,7 +361,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
                     },
                   ),
                   const SizedBox(height: 10),
-                  // Seletor de município
                   if (municipiosDaRegiao.isNotEmpty)
                     _dropdownPadronizado(
                       label: 'Município',
@@ -462,10 +492,26 @@ class _ConfigScreenState extends State<ConfigScreen> {
               const SizedBox(height: 16),
               _secaoTitulo('Sistema de irrigação'),
               _card([
-                _campoNumerico(
-                    'Área por planta', _espacamentoCtrl, 'm²'),
+                _campoNumerico('Área por planta', _espacamentoCtrl, 'm²'),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'Exemplos: Alface 0,06 m² | Tomate 0,50 m² | Milho 0,80 m²',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 _campoNumerico(
                     'Água por hora do gotejador', _vazaoCtrl, 'L/h'),
+                const SizedBox(height: 8),
+                // NOVO — campo de gotejadores
+                _campoGotejadores(),
               ]),
 
               const SizedBox(height: 24),
@@ -495,6 +541,93 @@ class _ConfigScreenState extends State<ConfigScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // Campo especial para gotejadores com botões + e -
+  Widget _campoGotejadores() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Gotejadores por planta',
+              style: TextStyle(fontSize: 13),
+            ),
+          ),
+          // Botão -
+          GestureDetector(
+            onTap: () {
+              final atual = int.tryParse(_gotejadoresCtrl.text) ?? 1;
+              if (atual > 1) {
+                setState(() =>
+                    _gotejadoresCtrl.text = (atual - 1).toString());
+              }
+            },
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(Icons.remove, size: 16, color: Colors.grey),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Campo numérico
+          SizedBox(
+            width: 44,
+            child: TextFormField(
+              controller: _gotejadoresCtrl,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w500),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+              ),
+              validator: (v) => _validar(v, 'un'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Botão +
+          GestureDetector(
+            onTap: () {
+              final atual = int.tryParse(_gotejadoresCtrl.text) ?? 1;
+              if (atual < 20) {
+                setState(() =>
+                    _gotejadoresCtrl.text = (atual + 1).toString());
+              }
+            },
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1AAF72),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(Icons.add, size: 16, color: Colors.white),
+            ),
+          ),
+          const SizedBox(width: 6),
+          const SizedBox(
+            width: 28,
+            child: Text('un',
+                style: TextStyle(fontSize: 11, color: Colors.grey)),
+          ),
+        ],
       ),
     );
   }
@@ -605,10 +738,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   ),
                 ),
                 onChanged: (_) => onChange?.call(),
-                validator: (v) =>
-                    (v == null || v.isEmpty || double.tryParse(v) == null)
-                        ? 'Inválido'
-                        : null,
+                validator: (v) => _validar(v, unidade),
               ),
             ),
             const SizedBox(width: 6),
