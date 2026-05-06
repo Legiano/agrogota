@@ -5,6 +5,30 @@ class ResultadoScreen extends StatelessWidget {
   final Resultado? resultado;
   const ResultadoScreen({super.key, this.resultado});
 
+  // Converte minutos para formato legível
+  String _formatarTempo(double minutos) {
+    final total = minutos.round();
+    if (total < 60) {
+      return '$total min';
+    }
+    final horas = total ~/ 60;
+    final mins = total % 60;
+    if (mins == 0) {
+      return '${horas}h';
+    }
+    return '${horas}h ${mins}min';
+  }
+
+  // Texto descritivo do tempo
+  String _descricaoTempo(double minutos) {
+    final total = minutos.round();
+    if (total < 60) return 'ligue a irrigação agora';
+    final horas = total ~/ 60;
+    final mins = total % 60;
+    if (mins == 0) return 'ligue por $horas hora${horas > 1 ? 's' : ''}';
+    return 'ligue por ${horas}h e ${mins}min';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (resultado == null) {
@@ -58,15 +82,16 @@ class ResultadoScreen extends StatelessWidget {
                       size: 48, color: Colors.white),
                   const SizedBox(height: 8),
                   Text(
-                    '${resultado!.tempoMin.toStringAsFixed(0)} min',
+                    _formatarTempo(resultado!.tempoMin),
                     style: const TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.bold,
                         color: Colors.white),
                   ),
-                  const Text(
-                    'ligue a irrigação agora',
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  Text(
+                    _descricaoTempo(resultado!.tempoMin),
+                    style: const TextStyle(
+                        color: Colors.white70, fontSize: 16),
                   ),
                 ],
               ),

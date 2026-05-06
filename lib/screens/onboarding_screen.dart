@@ -40,7 +40,7 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                       'Ciência no campo. Água na medida certa.',
+                       'Tecnologia que irriga. Família que floresce.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                           fontSize: 14, color: Color(0xFF888780)),
