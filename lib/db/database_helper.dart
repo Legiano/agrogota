@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../models/solo.dart';
 import '../models/cultura.dart';
 import '../models/entrada_climatica.dart';
@@ -11,6 +14,64 @@ class DatabaseHelper {
   DatabaseHelper._internal();
 
   static Database? _db;
+
+  // ==================== WEB ====================
+  // Na web usa SharedPreferences em vez de SQLite
+
+  Future<void> salvarSoloWeb(Solo solo) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('solo', jsonEncode(solo.toMap()));
+  }
+
+  Future<Solo?> getSoloWeb() async {
+    final prefs = await SharedPreferences.getInstance();
+    final json = prefs.getString('solo');
+    if (json == null) return null;
+    return Solo.fromMap(jsonDecode(json));
+  }
+
+  Future<void> salvarCulturaWeb(Cultura cultura) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cultura', jsonEncode(cultura.toMap()));
+  }
+
+  Future<Cultura?> getCulturaWeb() async {
+    final prefs = await SharedPreferences.getInstance();
+    final json = prefs.getString('cultura');
+    if (json == null) return null;
+    return Cultura.fromMap(jsonDecode(json));
+  }
+
+  Future<void> salvarResultadoWeb(Resultado resultado) async {
+    final prefs = await SharedPreferences.getInstance();
+    final lista = prefs.getStringList('historico') ?? [];
+    lista.insert(0, jsonEncode(resultado.toMap()));
+    if (lista.length > 30) lista.removeLast();
+    await prefs.setStringList('historico', lista);
+  }
+
+  Future<List<Resultado>> getHistoricoWeb() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lista = prefs.getStringList('historico') ?? [];
+    return lista.map((e) => Resultado.fromMap(jsonDecode(e))).toList();
+  }
+
+  Future<void> excluirResultadoWeb(int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    final lista = prefs.getStringList('historico') ?? [];
+    if (index >= 0 && index < lista.length) {
+      lista.removeAt(index);
+      await prefs.setStringList('historico', lista);
+    }
+  }
+
+  Future<void> limparConfiguracoesWeb() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('solo');
+    await prefs.remove('cultura');
+  }
+
+  // ==================== ANDROID ====================
 
   Future<Database> get database async {
     _db ??= await _initDb();
@@ -64,61 +125,81 @@ class DatabaseHelper {
     ''');
   }
 
-  // Solo
+  // ==================== MÉTODOS UNIFICADOS ====================
+
   Future<int> salvarSolo(Solo solo) async {
+    if (kIsWeb) {
+      await salvarSoloWeb(solo);
+      return 1;
+    }
     final db = await database;
     return db.insert('solo', solo.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<Solo?> getSolo() async {
+    if (kIsWeb) return getSoloWeb();
     final db = await database;
     final maps = await db.query('solo', limit: 1, orderBy: 'id DESC');
     if (maps.isEmpty) return null;
     return Solo.fromMap(maps.first);
   }
 
-  // Cultura
   Future<int> salvarCultura(Cultura cultura) async {
+    if (kIsWeb) {
+      await salvarCulturaWeb(cultura);
+      return 1;
+    }
     final db = await database;
     return db.insert('cultura', cultura.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<Cultura?> getCultura() async {
+    if (kIsWeb) return getCulturaWeb();
     final db = await database;
     final maps = await db.query('cultura', limit: 1, orderBy: 'id DESC');
     if (maps.isEmpty) return null;
     return Cultura.fromMap(maps.first);
   }
 
-  // Entrada climática
   Future<int> salvarEntrada(EntradaClimatica entrada) async {
+    if (kIsWeb) return 1;
     final db = await database;
     return db.insert('entrada_climatica', entrada.toMap());
   }
 
-  // Resultado
   Future<int> salvarResultado(Resultado resultado) async {
+    if (kIsWeb) {
+      await salvarResultadoWeb(resultado);
+      return 1;
+    }
     final db = await database;
     return db.insert('resultado', resultado.toMap());
   }
 
   Future<List<Resultado>> getHistorico() async {
+    if (kIsWeb) return getHistoricoWeb();
     final db = await database;
     final maps = await db.query('resultado',
         orderBy: 'data DESC', limit: 30);
     return maps.map((m) => Resultado.fromMap(m)).toList();
   }
 
-  // Excluir resultado do histórico
   Future<void> excluirResultado(int id) async {
+    if (kIsWeb) {
+      await excluirResultadoWeb(id);
+      return;
+    }
     final db = await database;
     await db.delete('resultado', where: 'id = ?', whereArgs: [id]);
   }
 
-  // Limpar configurações (solo e cultura)
   Future<void> limparConfiguracoes() async {
+    if (kIsWeb) {
+      await limparConfiguracoesWeb();
+      return;
+    }
     final db = await database;
     await db.delete('solo');
     await db.delete('cultura');
