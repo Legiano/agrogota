@@ -43,6 +43,11 @@ class DatabaseHelper {
   }
 
   Future<void> salvarResultadoWeb(Resultado resultado) async {
+    // CORREÇÃO: garante que todo resultado salvo na web tenha um id único.
+    // Antes, o id ficava null e a exclusão nunca era executada
+    // (historico_screen.dart só chama excluirResultado quando r.id != null).
+    resultado.id ??= resultado.data.millisecondsSinceEpoch;
+
     final prefs = await SharedPreferences.getInstance();
     final lista = prefs.getStringList('historico') ?? [];
     lista.insert(0, jsonEncode(resultado.toMap()));
@@ -56,13 +61,17 @@ class DatabaseHelper {
     return lista.map((e) => Resultado.fromMap(jsonDecode(e))).toList();
   }
 
-  Future<void> excluirResultadoWeb(int index) async {
+  Future<void> excluirResultadoWeb(int id) async {
+    // CORREÇÃO: antes recebia um índice de lista (int index) e usava
+    // lista.removeAt(index) — mas quem chamava passava o id do registro
+    // (r.id!), não a posição dele na lista. Agora filtra pelo id de verdade.
     final prefs = await SharedPreferences.getInstance();
     final lista = prefs.getStringList('historico') ?? [];
-    if (index >= 0 && index < lista.length) {
-      lista.removeAt(index);
-      await prefs.setStringList('historico', lista);
-    }
+    lista.removeWhere((item) {
+      final r = Resultado.fromMap(jsonDecode(item));
+      return r.id == id;
+    });
+    await prefs.setStringList('historico', lista);
   }
 
   Future<void> limparConfiguracoesWeb() async {
